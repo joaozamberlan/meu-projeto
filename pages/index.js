@@ -1,114 +1,292 @@
-import Image from "next/image";
-import { Geist, Geist_Mono } from "next/font/google";
+import React, { useState } from "react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+const exercisesDB = {
+  Peito: [
+    "Supino Reto", "Crucifixo",
+    "Supino Máquina Reto", "Supino Máquina Inclinado", "Supino Máquina Declinado",
+    "Mergulho / Paralela", "Cross-over Baixo", "Voador",
+    "Supino Inclinado com Halteres", "Supino Inclinado na Barra", 
+    "Supino Reto com Halteres", "Supino Reto com Barra", 
+    "Crucifixo Inclinado", "Crucifixo Reto", 
+    "Cross-over Alto", "Supino Inclinado no Smith", "Supino Reto no Smith"
+  ],
+  Costas: [
+    "Barra Fixa", "Remada Curvada", "Pulldown",
+    "Remada Articulada", "Pull Around", "Puxador Frontal com Pegada Triângulo",
+    "T Row", "Remada Baixa",
+    "Remada Curvada com Peito Apoiado no Banco", "Remada Serrote", 
+    "Puxador Frontal com Pegada Pronada", "Puxador Frontal com Supinada", 
+    "High-row Supinado", "High-row Neutro", "Low-Row", 
+    "Puxada Alta Articulada", "Pullover Máquina"
+  ],
+  Ombro: [
+    "Elevação Lateral Halter", "Elevação Lateral Polia", "Elevação Frontal",
+    "Desenvolvimento", "Face Pull", "Crucifixo Invertido",
+    "Desenvolvimento Smith", "Desenvolvimento Halter", 
+    "Desenvolvimento Máquina", "Voador Invertido", 
+    "Elevação Frontal Polia Baixa", "Crucifixo Invertido na Polia", 
+    "Remada Alta"
+  ],
+  Bíceps: [
+    "Rosca Scott", "Rosca Bayesian", "Rosca Banco 45",
+    "Rosca Direta", "Rosca Martelo", "Rosca Alternada", 
+    "Rosca Concentrada"
+  ],
+  Tríceps: [
+    "Tríceps Francês Polia", "Tríceps Testa Polia", "Tríceps Corda",
+    "Tríceps Carter", "Tríceps Unilateral na Polia Alta", "Paralela"
+  ],
+  Quadríceps: [
+    "Hack 45", "Leg 45", "Agachamento Livre", "Agachamento Smith",
+    "Agachamento Máquina Articulada", "Cadeira Extensora",
+    "Afundo", "Afundo Búlgaro", "Leg Press Horizontal", 
+    "Flexão Nórdica Reversa", "Agachamento Pêndulo"
+  ],
+  Isquiotibiais: [
+    "Mesa Flexora", "Cadeira Flexora", "Stiff"
+  ],
+  Panturrilha: [
+    "Panturrilha em Pé Máquina", "Panturrilha Leg Horizontal", 
+    "Panturrilha Sentado Máquina", "Panturrilha no Leg Press", 
+    "Panturrilha em Pé no Smith"
+  ],
+  Glúteos: [
+    "Elevação Pélvica", "Búlgaro", "Cadeira Abdutora", 
+    "Glúteo na Polia"
+  ]
+};
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+export default function TreinoApp() {
+  const [treinos, setTreinos] = useState([{ nome: "Treino A", musculosAlvo: "MMSS", exercicios: [] }]);
+  const [grupoSelecionado, setGrupoSelecionado] = useState("");
+  const [exercicioSelecionado, setExercicioSelecionado] = useState("");
+  const [series, setSeries] = useState("");
+  const [reps, setReps] = useState("");
+  const [metodo, setMetodo] = useState("");
+  const [observacao, setObservacao] = useState("");
+  const [treinoAtual, setTreinoAtual] = useState(0);
 
-export default function Home() {
+  const gruposMusculares = Object.keys(exercisesDB);
+  const opcoesMusculosAlvo = ["MMSS", "MMII", "MMII e MMSS"];
+
+  const adicionarExercicio = () => {
+    if (series > 0 && reps > 0 && exercicioSelecionado && grupoSelecionado) {
+        const novosTreinos = [...treinos];
+        novosTreinos[treinoAtual].exercicios.push({ 
+            nome: exercicioSelecionado, 
+            grupo: grupoSelecionado, 
+            series, 
+            reps, 
+            metodo, 
+            observacao 
+        });
+        setTreinos(novosTreinos);
+        setSeries("");
+        setReps("");
+        setExercicioSelecionado("");
+        setMetodo("");
+        setObservacao("");
+    } 
+};
+
+  const removerExercicio = (index) => {
+    const novosTreinos = [...treinos];
+    novosTreinos[treinoAtual].exercicios.splice(index, 1);
+    setTreinos(novosTreinos);
+  };
+
+  const adicionarTreino = () => {
+    setTreinos([...treinos, { nome: `Treino ${String.fromCharCode(65 + treinos.length)}`, musculosAlvo: "MMSS", exercicios: [] }]);
+  };
+
+  const gerarPDF = () => {
+    const doc = new jsPDF();
+    let startY = 10;
+  
+    treinos.forEach((treino, treinoIndex) => {
+      doc.setFontSize(10);
+      doc.text(`Treino – ${treino.nome}`, 14, startY);
+      doc.text(`Músculos alvo: ${treino.musculosAlvo}.`, 14, startY + 6);
+      doc.text("Treino aeróbico: 40 minutos de aeróbico contínuo pós treino ou em outro horário.", 14, startY + 12);
+      doc.setFillColor(0, 0, 0);
+      doc.setTextColor(255, 255, 255);
+      doc.rect(14, startY + 16, 182, 6, 'F');
+      doc.text("Aquecimento: Ler sugestão apresentada abaixo.", 16, startY + 20);
+      doc.setTextColor(0, 0, 0);
+  
+      autoTable(doc, {
+        startY: startY + 24,
+        head: [
+          ["ORDEM DOS EXERCÍCIOS", "NOME DOS EXERCÍCIOS", "SÉRIES", "REPETIÇÕES", "MÉTODO DE TREINAMENTO", "OBSERVAÇÕES"]
+        ],
+        body: treino.exercicios.map((ex, index) => [
+          index + 1,
+          ex.nome,
+          ex.series,
+          ex.reps,
+          ex.metodo,
+          ex.observacao
+        ]),
+        theme: 'grid',
+        headStyles: { fillColor: [183, 28, 28], textColor: [255, 255, 255] },
+        styles: { cellPadding: 2, fontSize: 10 },
+      });
+  
+      startY = doc.lastAutoTable.finalY + 10;
+  
+      if (treinoIndex < treinos.length - 1) {
+        doc.addPage();
+        startY = 10;
+      }
+    });
+  
+    // 🔥 **ADICIONE ESTA PARTE PARA O RESUMO DO VOLUME TOTAL**
+    doc.addPage(); // Adiciona uma nova página para o resumo
+    startY = 10;
+    doc.setFontSize(12);
+    doc.text("Resumo de Volume por Grupo Muscular", 14, startY);
+    startY += 10;
+  
+    // Calcula volume total por grupo muscular
+    const volumeTotal = {};
+    treinos.forEach(treino => {
+      treino.exercicios.forEach(ex => {
+        if (!volumeTotal[ex.grupo]) {
+          volumeTotal[ex.grupo] = 0;
+        }
+        volumeTotal[ex.grupo] += parseInt(ex.series, 10);
+      });
+    });
+  
+    // Gera a tabela do resumo
+    autoTable(doc, {
+      startY: startY,
+      head: [["Grupo Muscular", "Volume Total (Séries)"]],
+      body: Object.entries(volumeTotal).map(([grupo, volume]) => [grupo, volume]),
+      theme: 'grid',
+      headStyles: { fillColor: [0, 0, 255], textColor: [255, 255, 255] },
+      styles: { cellPadding: 2, fontSize: 10 },
+    });
+  
+    doc.save("treinos.pdf");
+  };
+  
+
+  const calcularTotalSeries = () => {
+    const totalSeriesPorGrupo = {};
+
+    treinos.forEach((treino) => {
+      treino.exercicios.forEach((exercicio) => {
+        const grupo = exercicio.grupo;
+        const series = Number(exercicio.series);
+
+        if (!totalSeriesPorGrupo[grupo]) {
+          totalSeriesPorGrupo[grupo] = 0;
+        }
+        totalSeriesPorGrupo[grupo] += series;
+      });
+    });
+
+    return totalSeriesPorGrupo;
+  };
+
   return (
-    <div
-      className={`${geistSans.variable} ${geistMono.variable} grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]`}
-    >
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
+    <div className="p-6 max-w-lg mx-auto bg-white shadow rounded">
+      <h1 className="text-xl font-bold text-gray-800">Montar Treino</h1>
+      <button onClick={adicionarTreino} className="mt-4 bg-green-500 text-white p-2 rounded">Adicionar Treino</button>
+      <button onClick={gerarPDF} className="mt-4 bg-blue-500 text-white p-2 rounded ml-2">Gerar PDF</button>
+      <div className="mt-4">
+        <label className="text-gray-800">Selecionar Treino:</label>
+        <select value={treinoAtual} onChange={(e) => setTreinoAtual(Number(e.target.value))} className="mt-1 block w-full p-2 border border-gray-300 rounded bg-white text-gray-800">
+          {treinos.map((treino, index) => (
+            <option key={index} value={index}>{treino.nome}</option>
+          ))}
+        </select>
+      </div>
+      <div className="mt-4">
+        <label className="text-gray-800">Músculos Alvo:</label>
+        <select value={treinos[treinoAtual].musculosAlvo} onChange={(e) => {
+          const novosTreinos = [...treinos];
+          novosTreinos[treinoAtual].musculosAlvo = e.target.value;
+          setTreinos(novosTreinos);
+        }} className="mt-1 block w-full p-2 border border-gray-300 rounded bg-white text-gray-800">
+          {opcoesMusculosAlvo.map((opcao) => (
+            <option key={opcao} value={opcao}>{opcao}</option>
+          ))}
+        </select>
+      </div>
+      <div className="mt-4">
+        <label className="text-gray-800">Grupo Muscular:</label>
+        <select value={grupoSelecionado} onChange={(e) => setGrupoSelecionado(e.target.value)} className="mt-1 block w-full p-2 border border-gray-300 rounded bg-white text-gray-800">
+          <option value="">Selecione um grupo</option>
+          {gruposMusculares.map((grupo) => (
+            <option key={grupo} value={grupo}>{grupo}</option>
+          ))}
+        </select>
+      </div>
+      <div className="mt-4">
+        <label className="text-gray-800">Exercício:</label>
+        <select value={exercicioSelecionado} onChange={(e) => setExercicioSelecionado(e.target.value)} className="mt-1 block w-full p-2 border border-gray-300 rounded bg-white text-gray-800">
+          <option value="">Selecione um exercício</option>
+          {grupoSelecionado && exercisesDB[grupoSelecionado].map((exercicio) => (
+            <option key={exercicio} value={exercicio}>{exercicio}</option>
+          ))}
+        </select>
+      </div>
+      <div className="mt-4">
+        <label className="text-gray-800">Séries:</label>
+        <input type="number" value={series} onChange={(e) => setSeries(e.target.value)} className="mt-1 block w-full p-2 border border-gray-300 rounded bg-white text-gray-800" />
+      </div>
+      <div className="mt-4">
+        <label className="text-gray-800">Repetições:</label>
+        <input
+          type="text" // Mudei de "number" para "text"
+          value={reps}
+          onChange={(e) => setReps(e.target.value)}
+          className="mt-1 block w-full p-2 border border-gray-300 rounded bg-white text-gray-800"
         />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              pages/index.js
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
+      <div className="mt-4">
+        <label className="text-gray-800">Método:</label>
+        <input type="text" value={metodo} onChange={(e) => setMetodo(e.target.value)} className="mt-1 block w-full p-2 border border-gray-300 rounded bg-white text-gray-800" />
+      </div>
+      <div className="mt-4">
+        <label className="text-gray-800">Observação:</label>
+        <input type="text" value={observacao} onChange={(e) => setObservacao(e.target.value)} className="mt-1 block w-full p-2 border border-gray-300 rounded bg-white text-gray-800" />
+      </div>
+      <button onClick={adicionarExercicio} className="mt-4 bg-yellow-500 text-white p-2 rounded">Adicionar Exercício</button>
+      <div className="mt-4">
+        <h2 className="text-black font-bold text-black-800">Exercícios</h2>
+        <ul>
+          {treinos[treinoAtual].exercicios.map((ex, index) => (
+            <li key={index} className="mt-2 flex justify-between items-center">
+              <span>{ex.nome} - {ex.series} séries de {ex.reps} repetições</span>
+              <button onClick={() => removerExercicio(index)} className="bg-red-500 text-white p-1 rounded">Remover</button>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className="mt-6">
+        <h2 className="text-lg font-bold text-gray-800">Volume Total por Agrupamento Muscular</h2>
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grupo Muscular</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Número Total de Séries</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {Object.entries(calcularTotalSeries()).map(([grupo, total]) => (
+              <tr key={grupo}>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{grupo}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{total || 0}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
