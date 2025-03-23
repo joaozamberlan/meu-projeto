@@ -43,8 +43,8 @@ const exercisesDB = {
     "Flexão Nórdica Reversa", "Agachamento Pêndulo"
   ],
   Isquiotibiais: [
-    "Mesa Flexora na Máquina", "Cadeira Flexora na Máquina", "Stiff com Halteres",
-    "Levantamento Terra com Barra", "Agachamento Sumo com Halteres", "Bom Dia com Barra"
+    "Mesa Flexora", "Cadeira Flexora", "Stiff",
+    "Levantamento Terra", "Agachamento Sumo", "Bom Dia"
   ],
   Panturrilha: [
     "Panturrilha em Pé na Máquina", "Panturrilha no Leg Press Horizontal", 
@@ -310,7 +310,7 @@ export default function TreinoApp() {
         fillColor: [240, 245, 250] // Linhas alternadas com azul bem claro
       },
       columnStyles: {
-        0: { halign: 'center', cellWidth: 15 }, // Coluna ORDEM centralizada e estreita
+        0: { halign: 'center', cellWidth: 20 }, // Aumentando de 15 para 20
         1: { cellWidth: 'auto' }, // Coluna EXERCÍCIO com largura automática
         2: { halign: 'center', cellWidth: 20 }, // Coluna SÉRIES centralizada
         3: { halign: 'center', cellWidth: 30 }, // Coluna REPETIÇÕES centralizada
