@@ -4,8 +4,7 @@ import autoTable from "jspdf-autotable";
 
 const exercisesDB = {
   Peito: [
-    "Supino Reto", "Crucifixo",
-    "Supino Máquina Reto", "Supino Máquina Inclinado", "Supino Máquina Declinado",
+    "Supino Reto", "Supino Reto Articulado", "Supino Inclinado Articulado", "Supino Declinado Articulado",
     "Mergulho / Paralela", "Cross-over Baixo", "Voador",
     "Supino Inclinado com Halteres", "Supino Inclinado na Barra", 
     "Supino Reto com Halteres", "Supino Reto com Barra", 
@@ -15,46 +14,46 @@ const exercisesDB = {
   Costas: [
     "Barra Fixa", "Remada Curvada", "Pulldown",
     "Remada Articulada", "Pull Around", "Puxador Frontal com Pegada Triângulo",
-    "T Row", "Remada Baixa",
+    "T-Bar Row", "Remada Baixa",
     "Remada Curvada com Peito Apoiado no Banco", "Remada Serrote", 
-    "Puxador Frontal com Pegada Pronada", "Puxador Frontal com Supinada", 
+    "Puxador Frontal com Pegada Pronada", "Puxador Frontal com Pegada Supinada", 
     "High-row Supinado", "High-row Neutro", "Low-Row", 
     "Puxada Alta Articulada", "Pullover Máquina"
   ],
   Ombro: [
-    "Elevação Lateral Halter", "Elevação Lateral Polia", "Elevação Frontal",
-    "Desenvolvimento", "Face Pull", "Crucifixo Invertido",
-    "Desenvolvimento Smith", "Desenvolvimento Halter", 
-    "Desenvolvimento Máquina", "Voador Invertido", 
-    "Elevação Frontal Polia Baixa", "Crucifixo Invertido na Polia", 
-    "Remada Alta"
+    "Elevação Lateral com Halteres", "Elevação Lateral na Polia Baixa", "Elevação Lateral na Polia Média",
+    "Elevação Frontal com Halteres", "Elevação Frontal na Polia Baixa", 
+    "Desenvolvimento com Halteres", "Desenvolvimento no Smith", "Desenvolvimento na Máquina", 
+    "Face Pull", "Crucifixo Invertido com Halteres", 
+    "Voador Invertido"
   ],
   Bíceps: [
-    "Rosca Scott", "Rosca Bayesian", "Rosca Banco 45",
-    "Rosca Direta", "Rosca Martelo", "Rosca Alternada", 
-    "Rosca Concentrada"
+    "Rosca Scott","Rosca Scott unilateral com halter", "Rosca Bayesian", "Rosca Banco 45°",
+    "Rosca Direta com barra", "Rosca Martelo com Halteres", "Rosca Alternada", 
+    "Rosca Concentrada", "Rosca Martelo na Polia"
   ],
   Tríceps: [
-    "Tríceps Francês Polia", "Tríceps Testa Polia", "Tríceps Corda",
+    "Tríceps Francês na Polia", "Tríceps Testa na Polia", "Tríceps Corda",
     "Tríceps Carter", "Tríceps Unilateral na Polia Alta", "Paralela"
   ],
   Quadríceps: [
-    "Hack 45", "Leg 45", "Agachamento Livre", "Agachamento Smith",
+    "Hack 45°", "Leg Press 45°", "Agachamento Livre", "Agachamento no Smith",
     "Agachamento Máquina Articulada", "Cadeira Extensora",
-    "Afundo", "Afundo Búlgaro", "Leg Press Horizontal", 
+    "Afundo", "Agachamento Búlgaro", "Leg Press Horizontal", 
     "Flexão Nórdica Reversa", "Agachamento Pêndulo"
   ],
   Isquiotibiais: [
-    "Mesa Flexora", "Cadeira Flexora", "Stiff"
+    "Mesa Flexora na Máquina", "Cadeira Flexora na Máquina", "Stiff com Halteres",
+    "Levantamento Terra com Barra", "Agachamento Sumo com Halteres", "Bom Dia com Barra"
   ],
   Panturrilha: [
-    "Panturrilha em Pé Máquina", "Panturrilha Leg Horizontal", 
-    "Panturrilha Sentado Máquina", "Panturrilha no Leg Press", 
+    "Panturrilha em Pé na Máquina", "Panturrilha no Leg Press Horizontal", 
+    "Panturrilha Sentado na Máquina", "Panturrilha no Leg Press 45°", 
     "Panturrilha em Pé no Smith"
   ],
   Glúteos: [
-    "Elevação Pélvica", "Búlgaro", "Cadeira Abdutora", 
-    "Glúteo na Polia"
+    "Elevação Pélvica", "Agachamento Búlgaro", "Cadeira Abdutora", 
+    "Glúteo na Polia baixa"
   ]
 };
 
@@ -106,12 +105,20 @@ export default function TreinoApp() {
   const fecharNotificacao = () => {
     setShowNotification(false);
   };
-
+  
+  const [exercicioCustom, setExercicioCustom] = useState("");
   const adicionarExercicio = () => {
-    if (series > 0 && reps && exercicioSelecionado && grupoSelecionado) {
+    if (series > 0 && reps && grupoSelecionado) {
+      const nomeExercicio = exercicioSelecionado === "customExercise" ? exercicioCustom : exercicioSelecionado;
+      
+      if (!nomeExercicio) {
+        mostrarNotificacao("Informe o nome do exercício", "error");
+        return;
+      }
+      
       const novosTreinos = [...treinos];
       novosTreinos[treinoAtual].exercicios.push({ 
-        nome: exercicioSelecionado, 
+        nome: nomeExercicio, 
         grupo: grupoSelecionado, 
         series, 
         reps, 
@@ -120,7 +127,7 @@ export default function TreinoApp() {
       });
       setTreinos(novosTreinos);
       resetarCamposExercicio();
-      mostrarNotificacao(`Exercício "${exercicioSelecionado}" adicionado com sucesso!`);
+      mostrarNotificacao(`Exercício "${nomeExercicio}" adicionado com sucesso!`);
     } else {
       mostrarNotificacao("Preencha todos os campos obrigatórios", "error");
     }
@@ -130,17 +137,10 @@ export default function TreinoApp() {
     setSeries("");
     setReps("");
     setExercicioSelecionado("");
+    setExercicioCustom("");
     setMetodo("");
     setObservacao("");
     setGrupoSelecionado("");
-  };
-
-  const removerExercicio = (index) => {
-    const nomeExercicio = treinos[treinoAtual].exercicios[index].nome;
-    const novosTreinos = [...treinos];
-    novosTreinos[treinoAtual].exercicios.splice(index, 1);
-    setTreinos(novosTreinos);
-    mostrarNotificacao(`Exercício "${nomeExercicio}" removido`);
   };
 
   const adicionarTreino = () => {
@@ -514,23 +514,38 @@ const resumirVolumeGruposMusculares = (doc) => {
         </div>
 
         {/* Exercício */}
-        <div className="mt-2">
-          <label className="text-gray-800">Exercício:</label>
-          <select
-            value={exercicioSelecionado}
-            onChange={(e) => setExercicioSelecionado(e.target.value)}
-            className="mt-1 block w-full p-2 border border-gray-300 rounded bg-white text-gray-800"
-            disabled={!grupoSelecionado}
-          >
-            <option value="">Selecione um exercício</option>
-            {grupoSelecionado &&
-              exercisesDB[grupoSelecionado].map((exercicio) => (
-                <option key={exercicio} value={exercicio}>
-                  {exercicio}
-                </option>
-              ))}
-          </select>
-        </div>
+<div className="mt-2">
+  <label className="text-gray-800">Exercício:</label>
+  <select
+    value={exercicioSelecionado}
+    onChange={(e) => setExercicioSelecionado(e.target.value)}
+    className="mt-1 block w-full p-2 border border-gray-300 rounded bg-white text-gray-800"
+    disabled={!grupoSelecionado}
+  >
+    <option value="">Selecione um exercício</option>
+    {grupoSelecionado &&
+      exercisesDB[grupoSelecionado].map((exercicio) => (
+        <option key={exercicio} value={exercicio}>
+          {exercicio}
+        </option>
+      ))}
+    {grupoSelecionado && <option value="customExercise">Não está na lista?</option>}
+  </select>
+</div>
+
+{/* Campo para exercício personalizado */}
+{exercicioSelecionado === "customExercise" && (
+  <div className="mt-2">
+    <label className="text-gray-800">Digite o nome do exercício:</label>
+    <input
+      type="text"
+      value={exercicioCustom}
+      onChange={(e) => setExercicioCustom(e.target.value)}
+      className="mt-1 block w-full p-2 border border-gray-300 rounded bg-white text-gray-800"
+      placeholder="Nome do exercício personalizado"
+    />
+  </div>
+)}
 
         {/* Séries */}
         <div className="mt-2">
