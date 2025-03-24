@@ -212,6 +212,14 @@ export default function TreinoApp() {
     setTreinos(novosTreinos);
   };
 
+  // Função para remover exercício
+  const removerExercicio = (index) => {
+    const novosTreinos = [...treinos];
+    novosTreinos[treinoAtual].exercicios.splice(index, 1);
+    setTreinos(novosTreinos);
+    mostrarNotificacao("Exercício removido com sucesso!");
+  };
+
   // Funções para edição de exercícios
   const iniciarEdicaoExercicio = (exercicio, index) => {
     setExercicioEditando({...exercicio});
