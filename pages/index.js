@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import exercisesDB from "./api/exercisesDB";
 import { gerarPDF, calcularTotalSeries } from "./api/_documentPDF";
 
@@ -17,47 +17,33 @@ export default function TreinoApp() {
   const [observacao, setObservacao] = useState("");
   const [treinoAtual, setTreinoAtual] = useState(0);
   const [nomeProfissional, setNomeProfissional] = useState("");
-
-  // Estados para edição de exercícios
   const [modoEdicao, setModoEdicao] = useState(false);
   const [exercicioEditando, setExercicioEditando] = useState(null);
   const [indexEditando, setIndexEditando] = useState(null);
-  
-  // Estado para feedback visual (pop-up)
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
-  const [notificationType, setNotificationType] = useState("success"); // success, error, info
+  const [notificationType, setNotificationType] = useState("success");
+  const [exercicioCustom, setExercicioCustom] = useState("");
 
   const gruposMusculares = Object.keys(exercisesDB);
   const opcoesMusculosAlvo = ["MMSS", "MMII", "MMII e MMSS"];
 
-  // Função para mostrar notificação
   const mostrarNotificacao = (mensagem, tipo = "success") => {
     setNotificationMessage(mensagem);
     setNotificationType(tipo);
     setShowNotification(true);
-    
-    // Auto-hide após 3 segundos
-    setTimeout(() => {
-      setShowNotification(false);
-    }, 1500);
+    setTimeout(() => setShowNotification(false), 1500);
   };
 
-  // Fechar notificação manualmente
-  const fecharNotificacao = () => {
-    setShowNotification(false);
-  };
-  
-  const [exercicioCustom, setExercicioCustom] = useState("");
+  const fecharNotificacao = () => setShowNotification(false);
+
   const adicionarExercicio = () => {
     if (series > 0 && reps && grupoSelecionado) {
       const nomeExercicio = exercicioSelecionado === "customExercise" ? exercicioCustom : exercicioSelecionado;
-      
       if (!nomeExercicio) {
         mostrarNotificacao("Informe o nome do exercício", "error");
         return;
       }
-      
       const novosTreinos = [...treinos];
       novosTreinos[treinoAtual].exercicios.push({ 
         nome: nomeExercicio, 
@@ -92,69 +78,48 @@ export default function TreinoApp() {
       exercicios: [], 
       tempoAerobico: 0 
     };
-    
     setTreinos([...treinos, novoTreino]);
     mostrarNotificacao(`${novoTreino.nome} adicionado com sucesso!`);
-    
-    // Opcionalmente, trocar para o novo treino automaticamente
     setTreinoAtual(treinos.length);
   };
-  
-  // Função para remover treino
+
   const removerTreino = () => {
     if (treinos.length <= 1) {
       mostrarNotificacao("Não é possível remover o único treino existente", "error");
       return;
     }
-    
     const nomeTreino = treinos[treinoAtual].nome;
     const novosTreinos = [...treinos];
     novosTreinos.splice(treinoAtual, 1);
-    
-    // Renomear os treinos restantes para manter a ordem alfabética
     novosTreinos.forEach((treino, index) => {
       treino.nome = `Treino ${String.fromCharCode(65 + index)}`;
     });
-    
     setTreinos(novosTreinos);
-    
-    // Ajustar o índice do treino atual se necessário
     if (treinoAtual >= novosTreinos.length) {
       setTreinoAtual(novosTreinos.length - 1);
     }
-    
     mostrarNotificacao(`${nomeTreino} removido com sucesso!`);
   };
 
-  // Funções para reordenar exercícios
   const moverExercicioParaCima = (index) => {
-    if (index === 0) return; // Não pode mover o primeiro item para cima
-    
+    if (index === 0) return;
     const novosTreinos = [...treinos];
     const treinoAtualObj = novosTreinos[treinoAtual];
-    
-    // Troca o exercício com o anterior
     [treinoAtualObj.exercicios[index], treinoAtualObj.exercicios[index - 1]] = 
     [treinoAtualObj.exercicios[index - 1], treinoAtualObj.exercicios[index]];
-    
     setTreinos(novosTreinos);
   };
 
   const moverExercicioParaBaixo = (index) => {
     const exercicios = treinos[treinoAtual].exercicios;
-    if (index === exercicios.length - 1) return; // Não pode mover o último item para baixo
-    
+    if (index === exercicios.length - 1) return;
     const novosTreinos = [...treinos];
     const treinoAtualObj = novosTreinos[treinoAtual];
-    
-    // Troca o exercício com o próximo
     [treinoAtualObj.exercicios[index], treinoAtualObj.exercicios[index + 1]] = 
     [treinoAtualObj.exercicios[index + 1], treinoAtualObj.exercicios[index]];
-    
     setTreinos(novosTreinos);
   };
 
-  // Função para remover exercício
   const removerExercicio = (index) => {
     const novosTreinos = [...treinos];
     novosTreinos[treinoAtual].exercicios.splice(index, 1);
@@ -162,7 +127,6 @@ export default function TreinoApp() {
     mostrarNotificacao("Exercício removido com sucesso!");
   };
 
-  // Funções para edição de exercícios
   const iniciarEdicaoExercicio = (exercicio, index) => {
     setExercicioEditando({...exercicio});
     setIndexEditando(index);
@@ -193,7 +157,6 @@ export default function TreinoApp() {
         metodo,
         observacao
       };
-      
       setTreinos(novosTreinos);
       setModoEdicao(false);
       setExercicioEditando(null);
@@ -205,7 +168,6 @@ export default function TreinoApp() {
     }
   };
 
-  // Função de geração de PDF
   const handleGerarPDF = () => {
     const resultado = gerarPDF(treinos, nomeProfissional);
     if (resultado) {
@@ -213,58 +175,15 @@ export default function TreinoApp() {
     }
   };
 
-  // Ícones SVG simplificados para os botões
-  const icons = {
-    up: (
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-      </svg>
-    ),
-    down: (
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-      </svg>
-    ),
-    edit: (
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-      </svg>
-    ),
-    delete: (
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-      </svg>
-    ),
-    add: (
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-      </svg>
-    ),
-    pdf: (
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-      </svg>
-    ),
-    remove: (
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-      </svg>
-    )
-  };
-
-  // Função para calcular o total de séries (duplicada do módulo PDF para evitar circular dependencies)
   const getTotalSeries = () => {
     const totalSeriesPorGrupo = {};
-
     treinos.forEach((treino) => {
       treino.exercicios.forEach((exercicio) => {
         const grupo = exercicio.grupo;
         const series = Number(exercicio.series);
-
         totalSeriesPorGrupo[grupo] = (totalSeriesPorGrupo[grupo] || 0) + series;
       });
     });
-
     return totalSeriesPorGrupo;
   };
 
@@ -277,10 +196,10 @@ export default function TreinoApp() {
           <p className="text-blue-100 mt-1">Monte seu plano de treino personalizado</p>
         </div>
 
-        {/* Notificação/Toast - Centralizada e estilizada */}
+        {/* Notificação/Toast */}
         {showNotification && (
-          <div className="fixed inset-0 flex items-center justify-center z-50">
-            <div className={`max-w-sm p-4 rounded-lg shadow-lg flex items-center space-x-3 
+          <div className="fixed bottom-4 right-4 z-50">
+            <div className={`p-4 rounded-lg shadow-lg flex items-center space-x-3 
               ${notificationType === "success" ? "bg-white border-l-4 border-green-500 text-green-700" : 
               notificationType === "error" ? "bg-white border-l-4 border-red-500 text-red-700" : 
               "bg-white border-l-4 border-blue-500 text-blue-700"}`}>
@@ -306,21 +225,27 @@ export default function TreinoApp() {
                   onClick={adicionarTreino}
                   className="flex-1 min-w-[120px] flex items-center justify-center gap-1 bg-green-600 text-white py-2.5 px-4 rounded-md hover:bg-green-700 transition duration-200 text-sm"
                 >
-                  {icons.add}
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
                   <span>Adicionar</span>
                 </button>
                 <button
                   onClick={removerTreino}
                   className="flex-1 min-w-[120px] flex items-center justify-center gap-1 bg-red-600 text-white py-2.5 px-4 rounded-md hover:bg-red-700 transition duration-200 text-sm"
                 >
-                  {icons.remove}
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
                   <span>Remover</span>
                 </button>
                 <button
                   onClick={handleGerarPDF}
                   className="flex-1 min-w-[120px] flex items-center justify-center gap-1 bg-blue-600 text-white py-2.5 px-4 rounded-md hover:bg-blue-700 transition duration-200 text-sm"
                 >
-                  {icons.pdf}
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
                   <span>PDF</span>
                 </button>
               </div>
@@ -615,7 +540,9 @@ export default function TreinoApp() {
                                 }`}
                                 title="Mover para cima"
                               >
-                                {icons.up}
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                </svg>
                               </button>
                               
                               {/* Botão Mover Para Baixo */}
@@ -629,7 +556,9 @@ export default function TreinoApp() {
                                 }`}
                                 title="Mover para baixo"
                               >
-                                {icons.down}
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
                               </button>
                               
                               {/* Botão Editar */}
@@ -638,7 +567,9 @@ export default function TreinoApp() {
                                 className="p-1 text-blue-600 hover:bg-blue-50 rounded-md transition duration-200"
                                 title="Editar exercício"
                               >
-                                {icons.edit}
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
                               </button>
                               
                               {/* Botão Remover */}
@@ -647,7 +578,9 @@ export default function TreinoApp() {
                                 className="p-1 text-red-600 hover:bg-red-50 rounded-md transition duration-200"
                                 title="Remover exercício"
                               >
-                                {icons.delete}
+                                <svg xmlns="http://www.w3.org/2000 /svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
                               </button>
                             </div>
                           </td>
