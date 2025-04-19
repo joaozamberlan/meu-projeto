@@ -40,9 +40,10 @@ const exercisesDB = {
     ],
     Abdômen: [
       "Prancha", "Elevação de Pernas", "Abdominal na Polia Alta",
-      "Abdominal na Polia Baixa", "Abdominal na Máquina", 
-      "Crunch no Banco Inclinado", "Crunch no Banco Reto", 
-      "Crunch na Polia Baixa", "Crunch na Polia Alta"
+       "Abdominal na Máquina","Abdominal no banco romano"
+    ],
+    Antebraço: [
+      "Flexão de punho", "Rosca punho", "Rosca de punho inversa",
     ],
     Isquiotibiais: [
       "Mesa Flexora", "Cadeira Flexora", "Stiff",
