@@ -896,7 +896,11 @@ export default function TreinoApp() {
                   placeholder="Buscar exercícios..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className={`w-full border rounded-md py-2 px-3 ${darkMode ? 'bg-gray-700 text-white' : 'bg-white'}`}
+                  className={`w-full border rounded-md py-2 px-3 ${
+                    darkMode 
+                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                  }`}
                 />
               </div>
 
