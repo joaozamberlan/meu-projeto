@@ -6,6 +6,11 @@ import Swal from 'sweetalert2';
 import exercisesDB from "./api/exercisesDB";
 import { gerarPDF, calcularTotalSeries } from "./api/_documentPDF";
 
+// Usar service workers para funcionalidade offline
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js');
+}
+
 // Atualizar o componente SortableTableRow
 const SortableTableRow = ({ exercicio, index, onEdit, onRemove, darkMode }) => {
   const {
@@ -121,6 +126,7 @@ export default function TreinoApp() {
   };
 
   const [exercicioCustom, setExercicioCustom] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const adicionarExercicio = () => {
     if (series > 0 && reps && grupoSelecionado) {
       const nomeExercicio = exercicioSelecionado === "customExercise" ? exercicioCustom : exercicioSelecionado;
@@ -359,6 +365,14 @@ export default function TreinoApp() {
   useEffect(() => {
     localStorage.setItem('historicoTreinos', JSON.stringify(historicoTreinos));
   }, [historicoTreinos]);
+
+  useEffect(() => {
+    const backupAutomatico = setInterval(() => {
+      localStorage.setItem('backup_treinos', JSON.stringify(treinos));
+    }, 300000); // 5 minutos
+
+    return () => clearInterval(backupAutomatico);
+  }, [treinos]);
 
   const adicionarAluno = async () => {
     const { value: nomeAluno } = await Swal.fire({
@@ -875,6 +889,16 @@ export default function TreinoApp() {
                   (Arraste para reordenar)
                 </span>
               </h2>
+
+              <div className="mb-4">
+                <input
+                  type="text"
+                  placeholder="Buscar exercícios..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className={`w-full border rounded-md py-2 px-3 ${darkMode ? 'bg-gray-700 text-white' : 'bg-white'}`}
+                />
+              </div>
 
               <DndContext
                 sensors={sensors}
