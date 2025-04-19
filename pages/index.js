@@ -825,14 +825,41 @@ export default function TreinoApp() {
                   <label className={`block text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-700'} mb-1`}>
                     Método (opcional)
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={metodo}
-                    onChange={(e) => setMetodo(e.target.value)}
+                    onChange={(e) => {
+                      if (e.target.value === 'customMethod') {
+                        Swal.fire({
+                          title: 'Método Personalizado',
+                          input: 'text',
+                          inputLabel: 'Digite o nome do método',
+                          inputPlaceholder: 'Ex: FST-7, GVT...',
+                          showCancelButton: true,
+                          confirmButtonText: 'Adicionar',
+                          cancelButtonText: 'Cancelar'
+                        }).then((result) => {
+                          if (result.isConfirmed && result.value) {
+                            setMetodo(result.value);
+                          } else {
+                            setMetodo('');
+                          }
+                        });
+                      } else {
+                        setMetodo(e.target.value);
+                      }
+                    }}
                     className={`w-full border rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition
                       ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'}`}
-                    placeholder="Ex: Rest-Pause, Super-set"
-                  />
+                  >
+                    <option value="">Selecione um método</option>
+                    <option value="Bi-set">Bi-set</option>
+                    <option value="Drop-set">Drop-set</option>
+                    <option value="Super-set">Super-set</option>
+                    <option value="Rest-pause">Rest-pause</option>
+                    <option value="Cluster-set">Cluster-set</option>
+                    <option value="Tensional básico">Tensional básico</option>
+                    <option value="customMethod">Não está na lista?</option>
+                  </select>
                 </div>
 
                 <div>
