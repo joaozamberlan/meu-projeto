@@ -6,7 +6,7 @@ import Swal from 'sweetalert2';
 import exercisesDB from "./api/exercisesDB";
 import { gerarPDF, calcularTotalSeries } from "./api/_documentPDF";
 
-// Criar um componente para linha da tabela ordenável
+// Atualizar o componente SortableTableRow
 const SortableTableRow = ({ exercicio, index, onEdit, onRemove, darkMode }) => {
   const {
     attributes,
@@ -32,36 +32,38 @@ const SortableTableRow = ({ exercicio, index, onEdit, onRemove, darkMode }) => {
       {...attributes}
       {...listeners}
     >
-      <td className="px-2 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+      <td className={`px-2 py-3 whitespace-nowrap text-sm font-medium ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>
         {index + 1}
       </td>
-      <td className="px-2 py-2 text-sm text-gray-800">
-        <div className="font-medium truncate" title={exercicio.nome}>{exercicio.nome}</div>
-        <div className="text-xs text-gray-500 truncate" title={exercicio.grupo}>{exercicio.grupo}</div>
+      <td className={`px-2 py-3 ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>
+        <div className="min-w-[150px] sm:min-w-0">
+          <div className="font-medium text-sm">{exercicio.nome}</div>
+          <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{exercicio.grupo}</div>
+        </div>
       </td>
-      <td className="px-2 py-2 whitespace-nowrap text-sm text-center text-gray-800">
+      <td className={`px-2 py-3 text-center whitespace-nowrap text-sm ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>
         {exercicio.series}
       </td>
-      <td className="px-2 py-2 whitespace-nowrap text-sm text-center text-gray-800">
+      <td className={`px-2 py-3 text-center whitespace-nowrap text-sm ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>
         {exercicio.reps}
       </td>
-      <td className="px-2 py-2 text-sm font-medium">
-        <div className="flex justify-center space-x-2">
+      <td className="px-2 py-3">
+        <div className="flex justify-center space-x-1">
           <button
             onClick={onEdit}
-            className="p-2 text-blue-500 hover:bg-blue-50 rounded-full transition-all duration-200 transform hover:scale-110"
+            className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-full transition-all duration-200"
             title="Editar exercício"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
           </button>
           <button
             onClick={onRemove}
-            className="p-2 text-rose-500 hover:bg-rose-50 rounded-full transition-all duration-200 transform hover:scale-110"
+            className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-full transition-all duration-200"
             title="Remover exercício"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
           </button>
@@ -866,10 +868,10 @@ export default function TreinoApp() {
               </div>
             </div>
 
-            <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-lg shadow-md p-6`}>
+            <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-lg shadow-md p-4 overflow-x-auto`}>
               <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4 border-b pb-2`}>
                 Exercícios do {treinos[treinoAtual].nome}
-                <span className="text-sm font-normal ml-2 text-gray-500">
+                <span className="hidden md:inline text-sm font-normal ml-2 text-gray-500">
                   (Arraste para reordenar)
                 </span>
               </h2>
@@ -879,44 +881,38 @@ export default function TreinoApp() {
                 collisionDetection={closestCenter}
                 onDragEnd={handleDragEnd}
               >
-                <table className="min-w-full divide-y divide-gray-200 table-fixed">
-                  <thead>
-                    <tr>
-                      <th className="w-12 px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        #
-                      </th>
-                      <th className="w-36 px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Exercício
-                      </th>
-                      <th className="w-16 px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Séries
-                      </th>
-                      <th className="w-16 px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Reps
-                      </th>
-                      <th className="w-24 px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Ações
-                      </th>
-                    </tr>
-                  </thead>
-                  <SortableContext
-                    items={treinos[treinoAtual].exercicios.map((_, index) => `exercicio-${index}`)}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    <tbody className={`${darkMode ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'}`}>
-                      {treinos[treinoAtual].exercicios.map((exercicio, index) => (
-                        <SortableTableRow
-                          key={`exercicio-${index}`}
-                          exercicio={exercicio}
-                          index={index}
-                          onEdit={() => iniciarEdicaoExercicio(exercicio, index)}
-                          onRemove={() => removerExercicio(index)}
-                          darkMode={darkMode}
-                        />
-                      ))}
-                    </tbody>
-                  </SortableContext>
-                </table>
+                <div className="min-w-full inline-block align-middle">
+                  <div className="overflow-hidden">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className={darkMode ? 'bg-gray-700' : 'bg-gray-50'}>
+                        <tr>
+                          <th className="w-12 px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                          <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Exercício</th>
+                          <th className="w-16 px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Séries</th>
+                          <th className="w-16 px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Reps</th>
+                          <th className="w-20 px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                        </tr>
+                      </thead>
+                      <SortableContext
+                        items={treinos[treinoAtual].exercicios.map((_, index) => `exercicio-${index}`)}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        <tbody className={`${darkMode ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'}`}>
+                          {treinos[treinoAtual].exercicios.map((exercicio, index) => (
+                            <SortableTableRow
+                              key={`exercicio-${index}`}
+                              exercicio={exercicio}
+                              index={index}
+                              onEdit={() => iniciarEdicaoExercicio(exercicio, index)}
+                              onRemove={() => removerExercicio(index)}
+                              darkMode={darkMode}
+                            />
+                          ))}
+                        </tbody>
+                      </SortableContext>
+                    </table>
+                  </div>
+                </div>
               </DndContext>
             </div>
           </div>
