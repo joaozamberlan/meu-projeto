@@ -234,28 +234,34 @@ const renderizarTabelaExercicios = (doc, treino, posicaoY) => {
 // Função para renderizar o resumo de volume
 const renderizarResumoVolume = (doc, treinos, nomeProfissional) => {
   const volumeTotal = calcularTotalSeries(treinos);
-  const posicaoY = 25; // Aumentado para melhor espaçamento
+  const posicaoY = 25;
   const larguraPagina = doc.internal.pageSize.width;
   
-  // Título da página de resumo com estilo aprimorado - centralizado
+  // Título da página
   doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(30, 50, 100);
   doc.text("RESUMO DE VOLUME POR GRUPO MUSCULAR", larguraPagina/2, posicaoY, { align: 'center' });
   
-  // Adicionar uma linha horizontal decorativa abaixo do título - centralizada
-  doc.setLineWidth(0.7); // Ligeiramente mais grossa
+  // Linha decorativa
+  doc.setLineWidth(0.7);
   doc.setDrawColor(80, 100, 140);
   const larguraLinha = 140;
   doc.line((larguraPagina - larguraLinha)/2, posicaoY + 5, (larguraPagina + larguraLinha)/2, posicaoY + 5);
   
+  // Calcular o total geral de séries
+  const totalGeral = Object.values(volumeTotal).reduce((acc, curr) => acc + curr, 0);
+  
   // Adicionar tabela com resumo de volume
   autoTable(doc, {
-    startY: posicaoY + 20, // Aumentado para melhor espaçamento
+    startY: posicaoY + 20,
     head: [["GRUPO MUSCULAR", "VOLUME TOTAL (SÉRIES)"]],
-    body: Object.entries(volumeTotal)
-      .sort((a, b) => b[1] - a[1]) // Ordena por volume (decrescente)
-      .map(([grupo, volume]) => [grupo, volume]),
+    body: [
+      ...Object.entries(volumeTotal)
+        .sort((a, b) => b[1] - a[1])
+        .map(([grupo, volume]) => [grupo, volume]),
+      ["VOLUME TOTAL SEMANAL", totalGeral] // Adiciona linha com o total
+    ],
     theme: 'grid',
     headStyles: {
       fillColor: [60, 90, 120],
@@ -267,32 +273,27 @@ const renderizarResumoVolume = (doc, treinos, nomeProfissional) => {
     },
     bodyStyles: {
       fontSize: 10,
-      cellPadding: 5, // Aumentado para centralizar melhor verticalmente
-      valign: 'middle' // Centralização vertical explícita
+      cellPadding: 5,
+      valign: 'middle'
     },
     alternateRowStyles: {
       fillColor: [240, 245, 250]
     },
-    columnStyles: {
-      0: { 
-        halign: 'center', // Centralizado horizontalmente 
-        valign: 'middle', // Centralizado verticalmente
-        cellPadding: 5
-      },
-      1: { 
-        halign: 'center', // Centralizado horizontalmente
-        valign: 'middle'  // Centralizado verticalmente
+    didParseCell: (data) => {
+      // Estiliza a última linha (total) diferente
+      if (data.row.index === Object.keys(volumeTotal).length) {
+        data.cell.styles.fillColor = [60, 90, 120];
+        data.cell.styles.textColor = [255, 255, 255];
+        data.cell.styles.fontStyle = 'bold';
+        data.cell.styles.fontSize = 11;
       }
     },
-    margin: { left: 50, right: 50 }, // Margens aumentadas para melhor centralização
+    columnStyles: {
+      0: { halign: 'center', valign: 'middle', cellPadding: 5 },
+      1: { halign: 'center', valign: 'middle' }
+    },
+    margin: { left: 50, right: 50 }
   });
-  
-  // Adicionar data de geração e informações adicionais em posições mais equilibradas
-  const dataAtual = new Date().toLocaleDateString();
-  doc.setFontSize(9); // Ligeiramente maior
-  doc.setTextColor(100, 100, 100);
-  doc.text(`Plano de treino gerado em: ${dataAtual}`, 20, 280);
-  doc.text(`Desenvolvido por: ${nomeProfissional || "Profissional"}`, larguraPagina - 20, 280, { align: 'right' });
 };
 
 // Função para calcular o total de séries por grupo muscular

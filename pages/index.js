@@ -701,6 +701,17 @@ export default function TreinoApp() {
                         </td>
                       </tr>
                     ))}
+                    {/* Adicionar linha do total */}
+                    <tr className={`border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                      <td className={`px-4 py-3 text-sm font-bold ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>
+                        Volume Total de séries
+                      </td>
+                      <td className="px-4 py-3 text-sm text-right">
+                        <span className={`font-bold px-2 py-1 rounded-full ${darkMode ? 'bg-green-900 text-green-200' : 'bg-green-100 text-green-800'}`}>
+                          {Object.values(getTotalSeries()).reduce((acc, curr) => acc + curr, 0)}
+                        </span>
+                      </td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
