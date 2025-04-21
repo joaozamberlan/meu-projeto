@@ -20,7 +20,7 @@ const SortableTableRow = ({ exercicio, index, onEdit, onRemove, darkMode }) => {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: exercicio.id || `exercicio-${index}` });
+  } = useSortable({ id: `exercicio-${index}` });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -33,11 +33,9 @@ const SortableTableRow = ({ exercicio, index, onEdit, onRemove, darkMode }) => {
     <tr 
       ref={setNodeRef} 
       style={style}
-      className={`${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} cursor-move`}
-      {...attributes}
-      {...listeners}
+      className={`${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
     >
-      <td className={`px-2 py-3 whitespace-nowrap text-sm font-medium ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>
+      <td {...attributes} {...listeners} className="cursor-move px-2 py-3 whitespace-nowrap text-sm font-medium">
         {index + 1}
       </td>
       <td className={`px-2 py-3 ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>
@@ -55,18 +53,22 @@ const SortableTableRow = ({ exercicio, index, onEdit, onRemove, darkMode }) => {
       <td className="px-2 py-3">
         <div className="flex justify-center space-x-1">
           <button
-            onClick={onEdit}
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit();
+            }}
             className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-full transition-all duration-200"
-            title="Editar exercício"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
           </button>
           <button
-            onClick={onRemove}
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove();
+            }}
             className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-full transition-all duration-200"
-            title="Remover exercício"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -116,9 +118,10 @@ export default function TreinoApp() {
     setNotificationType(tipo);
     setShowNotification(true);
 
+    // Reduzir o tempo para 1.5 segundos (1500ms)
     setTimeout(() => {
       setShowNotification(false);
-    }, 1500);
+    }, 1500); // Alterado de 3000 para 1500
   };
 
   const fecharNotificacao = () => {
