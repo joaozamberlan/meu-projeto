@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, arrayMove, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import Swal from 'sweetalert2';
 import exercisesDB from "./api/exercisesDB";
 import { gerarPDF, calcularTotalSeries } from "./api/_documentPDF";
@@ -21,13 +22,18 @@ const SortableTableRow = ({ exercicio, index, onEdit, onRemove, darkMode }) => {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: `exercicio-${index}` });
+  } = useSortable({
+    id: `exercicio-${index}`,
+    data: { index }
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    zIndex: isDragging ? 1 : 0,
+    zIndex: isDragging ? 999 : 'auto',
     opacity: isDragging ? 0.5 : 1,
+    cursor: 'move',
+    touchAction: 'none'
   };
 
   return (
@@ -35,8 +41,10 @@ const SortableTableRow = ({ exercicio, index, onEdit, onRemove, darkMode }) => {
       ref={setNodeRef} 
       style={style}
       className={`${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
+      {...attributes}
+      {...listeners}
     >
-      <td {...attributes} {...listeners} className="cursor-move px-2 py-3 whitespace-nowrap text-sm font-medium">
+      <td className="cursor-move px-2 py-3 whitespace-nowrap text-sm font-medium">
         {index + 1}
       </td>
       <td className={`px-2 py-3 ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>
@@ -112,7 +120,11 @@ export default function TreinoApp() {
   const opcoesMusculosAlvo = ["MMSS", "MMII", "MMII e MMSS"];
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Distância mínima para iniciar o drag
+      },
+    }),
     useSensor(KeyboardSensor)
   );
 
@@ -336,17 +348,21 @@ export default function TreinoApp() {
 
   const handleDragEnd = (event) => {
     const { active, over } = event;
-
-    if (active.id !== over.id) {
-      const oldIndex = parseInt(active.id.split('-')[1]);
-      const newIndex = parseInt(over.id.split('-')[1]);
+    
+    if (active && over && active.id !== over.id) {
+      const activeId = active.id.toString();
+      const overId = over.id.toString();
+      
+      const activeIndex = parseInt(activeId.split('-')[1]);
+      const overIndex = parseInt(overId.split('-')[1]);
 
       const novosTreinos = [...treinos];
       novosTreinos[treinoAtual].exercicios = arrayMove(
         novosTreinos[treinoAtual].exercicios,
-        oldIndex,
-        newIndex
+        activeIndex,
+        overIndex
       );
+      
       setTreinos(novosTreinos);
     }
   };
@@ -996,6 +1012,7 @@ export default function TreinoApp() {
                 sensors={sensors}
                 collisionDetection={closestCenter}
                 onDragEnd={handleDragEnd}
+                modifiers={[restrictToVerticalAxis]}
               >
                 <div className="min-w-full inline-block align-middle">
                   <div className="overflow-hidden">
