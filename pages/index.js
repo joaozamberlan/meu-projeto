@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, arrayMove, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -6,10 +6,12 @@ import Swal from 'sweetalert2';
 import exercisesDB from "./api/exercisesDB";
 import { gerarPDF, calcularTotalSeries } from "./api/_documentPDF";
 
-// Usar service workers para funcionalidade offline
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js');
-}
+// Modifique os estilos de cores para melhor contraste
+const buttonStyles = {
+  primary: `bg-blue-600 hover:bg-blue-700`, // Azul mais escuro
+  danger: `bg-red-600 hover:bg-red-700`,    // Vermelho mais escuro
+  success: `bg-green-600 hover:bg-green-700` // Verde mais escuro
+};
 
 // Atualizar o componente SortableTableRow
 const SortableTableRow = ({ exercicio, index, onEdit, onRemove, darkMode }) => {
@@ -105,6 +107,8 @@ export default function TreinoApp() {
   const [notificationMessage, setNotificationMessage] = useState("");
   const [notificationType, setNotificationType] = useState("success");
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const gruposMusculares = Object.keys(exercisesDB);
   const opcoesMusculosAlvo = ["MMSS", "MMII", "MMII e MMSS"];
 
@@ -130,13 +134,21 @@ export default function TreinoApp() {
 
   const [exercicioCustom, setExercicioCustom] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const adicionarExercicio = () => {
-    if (series > 0 && reps && grupoSelecionado) {
-      const nomeExercicio = exercicioSelecionado === "customExercise" ? exercicioCustom : exercicioSelecionado;
+  const adicionarExercicio = useCallback(() => {
+    try {
+      if (!grupoSelecionado) {
+        throw new Error("Selecione um grupo muscular");
+      }
+      if (!series || series <= 0) {
+        throw new Error("Número de séries inválido");
+      }
+      if (!reps) {
+        throw new Error("Especifique as repetições");
+      }
 
+      const nomeExercicio = exercicioSelecionado === "customExercise" ? exercicioCustom : exercicioSelecionado;
       if (!nomeExercicio) {
-        mostrarNotificacao("Informe o nome do exercício", "error");
-        return;
+        throw new Error("Selecione ou digite um exercício");
       }
 
       const novosTreinos = [...treinos];
@@ -151,10 +163,10 @@ export default function TreinoApp() {
       setTreinos(novosTreinos);
       resetarCamposExercicio();
       mostrarNotificacao(`Exercício "${nomeExercicio}" adicionado com sucesso!`);
-    } else {
-      mostrarNotificacao("Preencha todos os campos obrigatórios", "error");
+    } catch (error) {
+      mostrarNotificacao(error.message, "error");
     }
-  };
+  }, [series, reps, grupoSelecionado, exercicioSelecionado, exercicioCustom, metodo, observacao, treinos, treinoAtual]);
 
   const resetarCamposExercicio = () => {
     setSeries("");
@@ -301,6 +313,17 @@ export default function TreinoApp() {
     }
   };
 
+  const salvarTreino = async () => {
+    setIsLoading(true);
+    try {
+      // ... operação
+    } catch (error) {
+      mostrarNotificacao(error.message, "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleGerarPDF = () => {
     const resultado = gerarPDF(treinos, nomeProfissional);
     if (resultado) {
@@ -329,7 +352,7 @@ export default function TreinoApp() {
     }
   };
 
-  const getTotalSeries = () => {
+  const getTotalSeries = useMemo(() => {
     const totalSeriesPorGrupo = {};
 
     treinos.forEach((treino) => {
@@ -342,7 +365,7 @@ export default function TreinoApp() {
     });
 
     return totalSeriesPorGrupo;
-  };
+  }, [treinos]);
 
   const [alunos, setAlunos] = useState([]);
   const [alunoSelecionado, setAlunoSelecionado] = useState(null);
@@ -370,12 +393,26 @@ export default function TreinoApp() {
   }, [historicoTreinos]);
 
   useEffect(() => {
+    // Backup a cada 2 minutos
     const backupAutomatico = setInterval(() => {
-      localStorage.setItem('backup_treinos', JSON.stringify(treinos));
-    }, 300000); // 5 minutos
+      try {
+        localStorage.setItem('backup_treinos', JSON.stringify(treinos));
+        localStorage.setItem('backup_timestamp', new Date().toISOString());
+      } catch (error) {
+        console.error('Erro ao fazer backup:', error);
+      }
+    }, 120000); // 2 minutos
 
     return () => clearInterval(backupAutomatico);
   }, [treinos]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(err => {
+        console.error('Service Worker registration failed:', err);
+      });
+    }
+  }, []);
 
   const adicionarAluno = async () => {
     const { value: nomeAluno } = await Swal.fire({
@@ -466,7 +503,12 @@ export default function TreinoApp() {
   };
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'dark bg-gray-900' : 'bg-gray-100'} p-2 sm:p-4 md:p-6`}>
+    <div className={`${darkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'} min-h-screen p-2 sm:p-4 md:p-6`}>
+      {isLoading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      )}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg shadow-lg p-4 sm:p-6 mb-6">
           <div className="flex justify-between items-center">
@@ -692,7 +734,7 @@ export default function TreinoApp() {
                     </tr>
                   </thead>
                   <tbody className={`${darkMode ? 'bg-gray-800' : 'bg-white'} divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                    {Object.entries(getTotalSeries()).map(([grupo, total]) => (
+                    {Object.entries(getTotalSeries).map(([grupo, total]) => (
                       <tr key={grupo} className={darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}>
                         <td className={`px-4 py-3 text-sm font-medium ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>
                           {grupo}
@@ -711,7 +753,7 @@ export default function TreinoApp() {
                       </td>
                       <td className="px-4 py-3 text-sm text-right">
                         <span className={`font-bold px-2 py-1 rounded-full ${darkMode ? 'bg-green-900 text-green-200' : 'bg-green-100 text-green-800'}`}>
-                          {Object.values(getTotalSeries()).reduce((acc, curr) => acc + curr, 0)}
+                          {Object.values(getTotalSeries).reduce((acc, curr) => acc + curr, 0)}
                         </span>
                       </td>
                     </tr>
@@ -905,20 +947,26 @@ export default function TreinoApp() {
                 )}
                 <button
                   onClick={modoEdicao ? salvarEdicaoExercicio : adicionarExercicio}
-                  className={`w-full sm:w-auto ${
-                    modoEdicao 
-                      ? 'bg-yellow-500 hover:bg-yellow-600' 
-                      : 'bg-emerald-500 hover:bg-emerald-600'
-                  } text-white py-2.5 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md flex items-center justify-center gap-2`}
+                  title={modoEdicao ? "Salvar alterações do exercício" : "Adicionar novo exercício ao treino"}
+                  className="group relative w-full sm:w-auto"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    {modoEdicao ? (
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    ) : (
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    )}
-                  </svg>
-                  {modoEdicao ? 'Salvar Alterações' : 'Adicionar Exercício'}
+                  <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-sm bg-gray-900 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                    {modoEdicao ? "Salvar alterações" : "Adicionar exercício"}
+                  </span>
+                  <div className={`transition-all duration-300 ease-in-out transform hover:scale-102 w-full sm:w-auto ${
+                    modoEdicao 
+                      ? `${buttonStyles.primary}` 
+                      : `${buttonStyles.success}`
+                  } text-white py-2.5 px-6 rounded-lg shadow-md flex items-center justify-center gap-2`}>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      {modoEdicao ? (
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      ) : (
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      )}
+                    </svg>
+                    {modoEdicao ? 'Salvar Alterações' : 'Adicionar Exercício'}
+                  </div>
                 </button>
               </div>
             </div>
@@ -941,7 +989,7 @@ export default function TreinoApp() {
                     darkMode 
                       ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
                       : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                  }`}
+                  } transition-all duration-200 focus:ring-2 focus:ring-blue-500 hover:border-blue-400`}
                 />
               </div>
 
