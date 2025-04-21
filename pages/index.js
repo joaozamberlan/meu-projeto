@@ -8,12 +8,11 @@ import { gerarPDF, calcularTotalSeries } from "./api/_documentPDF";
 
 // Modifique os estilos de cores para melhor contraste
 const buttonStyles = {
-  primary: `bg-blue-600 hover:bg-blue-700`, // Azul mais escuro
-  danger: `bg-red-600 hover:bg-red-700`,    // Vermelho mais escuro
-  success: `bg-green-600 hover:bg-green-700` // Verde mais escuro
+  primary: `bg-blue-600 hover:bg-blue-700`,
+  danger: `bg-red-600 hover:bg-red-700`, 
+  success: `bg-green-600 hover:bg-green-700` 
 };
 
-// Atualizar o componente SortableTableRow
 const SortableTableRow = ({ exercicio, index, onEdit, onRemove, darkMode }) => {
   const {
     attributes,
