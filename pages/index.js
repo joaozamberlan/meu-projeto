@@ -145,6 +145,7 @@ export default function TreinoApp() {
 
   const [exercicioCustom, setExercicioCustom] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [ultimoSalvamento, setUltimoSalvamento] = useState(new Date());
   const adicionarExercicio = useCallback(() => {
     try {
       if (!grupoSelecionado) {
@@ -171,7 +172,7 @@ export default function TreinoApp() {
         metodo,
         observacao
       });
-      setTreinos(novosTreinos);
+      salvarTreinos(novosTreinos); // Use salvarTreinos em vez de setTreinos
       resetarCamposExercicio();
       mostrarNotificacao(`Exercício "${nomeExercicio}" adicionado com sucesso!`);
     } catch (error) {
@@ -197,7 +198,7 @@ export default function TreinoApp() {
       tempoAerobico: 0
     };
 
-    setTreinos([...treinos, novoTreino]);
+    salvarTreinos([...treinos, novoTreino]);
     mostrarNotificacao(`${novoTreino.nome} adicionado com sucesso!`);
     setTreinoAtual(treinos.length);
   };
@@ -228,7 +229,7 @@ export default function TreinoApp() {
         treino.nome = `Treino ${String.fromCharCode(65 + index)}`;
       });
 
-      setTreinos(novosTreinos);
+      salvarTreinos(novosTreinos);
 
       if (treinoAtual >= novosTreinos.length) {
         setTreinoAtual(novosTreinos.length - 1);
@@ -277,7 +278,7 @@ export default function TreinoApp() {
     if (result.isConfirmed) {
       const novosTreinos = [...treinos];
       novosTreinos[treinoAtual].exercicios.splice(index, 1);
-      setTreinos(novosTreinos);
+      salvarTreinos(novosTreinos);
       mostrarNotificacao("Exercício removido com sucesso!");
     }
   };
@@ -313,7 +314,7 @@ export default function TreinoApp() {
         observacao
       };
 
-      setTreinos(novosTreinos);
+      salvarTreinos(novosTreinos);
       setModoEdicao(false);
       setExercicioEditando(null);
       setIndexEditando(null);
@@ -363,7 +364,7 @@ export default function TreinoApp() {
         overIndex
       );
       
-      setTreinos(novosTreinos);
+      salvarTreinos(novosTreinos);
     }
   };
 
@@ -428,6 +429,29 @@ export default function TreinoApp() {
       });
     }
   }, []);
+
+  useEffect(() => {
+    // Carrega os treinos salvos quando o componente monta
+    const treinosSalvos = localStorage.getItem('treinos');
+    if (treinosSalvos) {
+      try {
+        setTreinos(JSON.parse(treinosSalvos));
+      } catch (error) {
+        console.error('Erro ao carregar treinos salvos:', error);
+      }
+    }
+  }, []);
+
+  const salvarTreinos = (novosTreinos) => {
+    setTreinos(novosTreinos);
+    try {
+      localStorage.setItem('treinos', JSON.stringify(novosTreinos));
+      setUltimoSalvamento(new Date());
+    } catch (error) {
+      console.error('Erro ao salvar treinos:', error);
+      mostrarNotificacao('Erro ao salvar alterações', 'error');
+    }
+  };
 
   const adicionarAluno = async () => {
     const { value: nomeAluno } = await Swal.fire({
@@ -525,21 +549,25 @@ export default function TreinoApp() {
         </div>
       )}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg shadow-lg p-4 sm:p-6 mb-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white">Plano de Treino</h1>
-              <p className="text-blue-100 mt-1 text-sm sm:text-base">Monte seu plano de treino personalizado</p>
-            </div>
-            <button
-              onClick={toggleDarkMode}
-              className="p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all duration-200 transform hover:scale-105"
-              title={darkMode ? "Mudar para tema claro" : "Mudar para tema escuro"}
-            >
-              {darkMode ? '☀️' : '🌙'}
-            </button>
-          </div>
-        </div>
+      <div className="bg-gradient-to-r from-black to-blue-800 rounded-lg shadow-lg p-4 sm:p-6 mb-6">
+  <div className="flex justify-between items-center">
+    <div className="flex items-center space-x-4">
+    <img src="/favicon.png" alt="Ícone do app" className="w-10 h-10" />
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-bold text-white">Plano de Treino</h1>
+        <p className="text-blue-100 mt-1 text-sm sm:text-base">Monte seu plano de treino personalizado</p>
+      </div>
+    </div>
+    <button
+      onClick={toggleDarkMode}
+      className="p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all duration-200 transform hover:scale-105"
+      title={darkMode ? "Mudar para tema claro" : "Mudar para tema escuro"}
+    >
+      {darkMode ? '☀️' : '🌙'}
+    </button>
+  </div>
+</div>
+
 
         <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-md p-4 sm:p-6 mb-6`}>
           <div className="flex items-center justify-between mb-4">
@@ -686,7 +714,7 @@ export default function TreinoApp() {
                   onChange={(e) => {
                     const novosTreinos = [...treinos];
                     novosTreinos[treinoAtual].musculosAlvo = e.target.value;
-                    setTreinos(novosTreinos);
+                    salvarTreinos(novosTreinos);
                   }}
                   className={`w-full border rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition
                     ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'}`}
@@ -709,7 +737,7 @@ export default function TreinoApp() {
                   onChange={(e) => {
                     const novosTreinos = [...treinos];
                     novosTreinos[treinoAtual].tempoAerobico = e.target.value;
-                    setTreinos(novosTreinos);
+                    salvarTreinos(novosTreinos);
                   }}
                   className={`w-full border rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition
                     ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'}`}
