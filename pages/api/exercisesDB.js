@@ -4,7 +4,7 @@ const exercisesDB = {
       "Mergulho / Paralela", "Cross-over Baixo", "Voador",
       "Supino Inclinado com Halteres", "Supino Inclinado na Barra", 
       "Supino Reto com Halteres", "Supino Reto com Barra", 
-      "Crucifixo Inclinado", "Crucifixo Reto", 
+      "Crucifixo Inclinado", "Crucifixo Reto", "Supino máquina",
       "Cross-over Alto", "Supino Inclinado no Smith", "Supino Reto no Smith"
     ],
     Costas: [
