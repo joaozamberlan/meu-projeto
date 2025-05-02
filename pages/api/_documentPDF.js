@@ -3,53 +3,65 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 // Função principal para gerar o PDF
-export const gerarPDF = (treinos, nomeProfissional) => {
-  // Inicializa documento PDF
-  const doc = new jsPDF();
-  
-  // Configurações visuais gerais
-  const cores = {
-    titulo: [30, 50, 100],        // Azul escuro para títulos
-    subtitulo: [50, 50, 50],      // Cinza escuro para subtítulos
-    aquecimento: {
-      fundo: [245, 247, 250],     // Azul muito claro para fundo
-      borda: [80, 100, 140],      // Azul médio para borda
-      texto: [40, 40, 80]         // Azul-escuro para texto
-    },
-    tabela: {
-      cabecalho: [60, 90, 120],   // Azul para cabeçalho
-      linhaAlternada: [240, 245, 250] // Azul claro para linhas alternadas
-    }
-  };
-  
-  // Gera páginas com detalhes dos treinos
-  treinos.forEach((treino, treinoIndex) => {
-    let posicaoY = 20; // Aumentado ligeiramente para melhor espaçamento do topo
+export const gerarPDF = (treinos, nomeProfissional, nomeArquivo = 'Plano de treino') => {
+  try {
+    // Inicializa documento PDF
+    const doc = new jsPDF();
     
-    // Renderiza cabeçalho do treino - centralizado
-    renderizarCabecalhoTreino(doc, treino, posicaoY, cores);
-    posicaoY += treino.tempoAerobico > 0 ? 32 : 28; // Ligeiramente aumentado para melhor espaçamento
+    // Configurações visuais gerais
+    const cores = {
+      titulo: [30, 50, 100],        // Azul escuro para títulos
+      subtitulo: [50, 50, 50],      // Cinza escuro para subtítulos
+      aquecimento: {
+        fundo: [245, 247, 250],     // Azul muito claro para fundo
+        borda: [80, 100, 140],      // Azul médio para borda
+        texto: [40, 40, 80]         // Azul-escuro para texto
+      },
+      tabela: {
+        cabecalho: [60, 90, 120],   // Azul para cabeçalho
+        linhaAlternada: [240, 245, 250] // Azul claro para linhas alternadas
+      }
+    };
     
-    // Renderiza tabela de exercícios
-    renderizarTabelaExercicios(doc, treino, posicaoY);
+    // Gera páginas com detalhes dos treinos
+    treinos.forEach((treino, treinoIndex) => {
+      let posicaoY = 20; // Aumentado ligeiramente para melhor espaçamento do topo
+
+      renderizarCabecalhoTreino(doc, treino, posicaoY, cores);
+      posicaoY += treino.tempoAerobico > 0 ? 32 : 28; // Ligeiramente aumentado para melhor espaçamento
+      
+      // Renderiza tabela de exercícios
+      renderizarTabelaExercicios(doc, treino, posicaoY);
+      
+      // Adiciona nova página para o próximo treino (se houver)
+      if (treinoIndex < treinos.length - 1) {
+        doc.addPage();
+      }
+    });
     
-    // Adiciona nova página para o próximo treino (se houver)
-    if (treinoIndex < treinos.length - 1) {
-      doc.addPage();
-    }
-  });
-  
-  // Adiciona página de resumo no final
-  doc.addPage();
-  renderizarResumoVolume(doc, treinos, nomeProfissional);
-  
-  // Adiciona página de observações gerais
-  renderizarObservacoesGerais(doc);
-  
-  // Salva o PDF
-  doc.save("plano_treino.pdf");
-  
-  return true; // Retorno para indicar sucesso
+    doc.addPage();
+    renderizarResumoVolume(doc, treinos, nomeProfissional);
+    
+    // Adiciona página de observações gerais
+    renderizarObservacoesGerais(doc);
+    
+    // Onde você adiciona o nome do profissional no PDF
+    const margin = 20;
+    const currentY = 10;
+    doc.text(`Profissional: ${nomeProfissional}`, margin, currentY);
+    
+    // Usa o nome do arquivo passado ou o nome padrão
+    const fileName = nomeArquivo || 'Plano de Treino';
+    console.log('Salvando PDF com nome:', fileName); // Para debug
+
+    // Salva o PDF com o nome definido
+    doc.save(`${fileName}.pdf`);
+    
+    return true; // Retorno para indicar sucesso
+  } catch (error) {
+    console.error('Erro ao gerar PDF:', error);
+    return false;
+  }
 };
 
 // Função para renderizar o cabeçalho de cada treino
@@ -81,22 +93,17 @@ const renderizarCabecalhoTreino = (doc, treino, posicaoY, cores) => {
   }
 };
 
-// Função para renderizar a caixa de aquecimento
 const renderizarCaixaAquecimento = (doc, posicaoY, cores) => {
-  // Desenha retângulo com bordas arredondadas
   doc.setFillColor(...cores.fundo);
   doc.setDrawColor(...cores.borda);
   
-  const margemLateral = 20; // Aumentada para melhor alinhamento
+  const margemLateral = 20; 
   const larguraPagina = doc.internal.pageSize.width;
   const largura = larguraPagina - (margemLateral * 2);
-  const altura = 10; // Ligeiramente aumentada
-  const raioCantos = 3; // Raio para bordas mais arredondadas
-  
-  // Retângulo com bordas arredondadas
+  const altura = 10; 
+  const raioCantos = 3; 
   doc.roundedRect(margemLateral, posicaoY, largura, altura, raioCantos, raioCantos, 'FD');
   
-  // Texto do aquecimento - centralizado
   doc.setTextColor(...cores.texto);
   doc.setFont('helvetica', 'bold');
   doc.text("Aquecimento, tempo de descanso: Ler observações no final do PDF.", 
@@ -104,30 +111,25 @@ const renderizarCaixaAquecimento = (doc, posicaoY, cores) => {
   doc.setFont('helvetica', 'normal');
 };
 
-// Função para renderizar página de observações gerais
 const renderizarObservacoesGerais = (doc) => {
   doc.addPage();
-  const posicaoY = 25; // Aumentado para melhor espaçamento
+  const posicaoY = 25;
   const larguraPagina = doc.internal.pageSize.width;
   
-  // Título da página - centralizado com estilo aprimorado
   doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(30, 50, 100);
   doc.text("OBSERVAÇÕES GERAIS", larguraPagina/2, posicaoY, { align: 'center' });
   
-  // Adicionar uma linha horizontal decorativa abaixo do título - centralizada
-  doc.setLineWidth(0.7); // Ligeiramente mais grossa
+  doc.setLineWidth(0.7);
   doc.setDrawColor(80, 100, 140);
   const larguraLinha = 140;
   doc.line((larguraPagina - larguraLinha)/2, posicaoY + 5, (larguraPagina + larguraLinha)/2, posicaoY + 5);
   
-  // Configurações de texto
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(11);
   doc.setTextColor(60, 60, 60);
   
-  // Definindo margens para o texto das observações - mais equilibradas
   const margemEsquerda = 30;
   const margemDireita = 30;
   const larguraDisponivel = larguraPagina - margemEsquerda - margemDireita;
@@ -145,43 +147,34 @@ const renderizarObservacoesGerais = (doc) => {
     "Esse aquecimento é indicado nos primeiros exercícios para cada grupo muscular, principalmente nos exercícios onde mais carga é mobilizada. Não é obrigatória a realização caso o treino fique muito longo."
   ];
   
-  // Iniciando a posição Y para o texto (abaixo do título e linha)
   let y = posicaoY + 20;
   
-  // Renderiza cada linha de observação com quebra de texto apropriada
   observacoes.forEach((linha, index) => {
     if (linha === "") {
-      // Linha em branco, apenas avança um pouco o Y
-      y += 7; // Ligeiramente aumentado
+      y += 7;
     } else if (linha.startsWith("Sugestão")) {
-      // Título da seção de aquecimento com formatação em negrito
       doc.setFont('helvetica', 'bold');
       doc.text(linha, margemEsquerda, y);
       doc.setFont('helvetica', 'normal');
-      y += 9; // Aumentado para destacar melhor o título da seção
+      y += 9;
     } else if (linha.match(/^\d\./)) {
-      // Itens numerados da lista de aquecimento (com recuo)
-      // Garantindo que linhas longas não sejam cortadas
       const linhasQuebradas = doc.splitTextToSize(linha, larguraDisponivel - 10);
-      doc.text(linhasQuebradas, margemEsquerda + 8, y); // Recuo para os itens numerados
-      y += 7 * linhasQuebradas.length; // Avança baseado no número de linhas
+      doc.text(linhasQuebradas, margemEsquerda + 8, y); 
+      y += 7 * linhasQuebradas.length;
     } else {
-      // Parágrafos normais com quebra de texto automática
       const linhasQuebradas = doc.splitTextToSize(linha, larguraDisponivel);
       doc.text(linhasQuebradas, margemEsquerda, y);
-      y += 7 * linhasQuebradas.length + 1; // Ligeiro espaço adicional entre parágrafos
+      y += 7 * linhasQuebradas.length + 1;
     }
   });
   
-  // Adicionar rodapé com número de página - centralizado
   const totalPages = doc.internal.getNumberOfPages();
   const currentPage = doc.internal.getCurrentPageInfo().pageNumber;
-  doc.setFontSize(9); // Ligeiramente maior para melhor legibilidade
+  doc.setFontSize(9); 
   doc.setTextColor(120, 120, 120);
   doc.text(`Página ${currentPage} de ${totalPages}`, larguraPagina/2, 285, { align: 'center' });
 };
 
-// Função para renderizar a tabela de exercícios
 const renderizarTabelaExercicios = (doc, treino, posicaoY) => {
   autoTable(doc, {
     startY: posicaoY,
@@ -200,12 +193,12 @@ const renderizarTabelaExercicios = (doc, treino, posicaoY) => {
       textColor: [255, 255, 255],
       fontStyle: 'bold',
       halign: 'center',
-      fontSize: 9, // Reduzido para evitar cortes
-      cellPadding: 3 // Adicionado padding para melhor espaçamento
+      fontSize: 9, 
+      cellPadding: 3 
     },
     bodyStyles: {
       fontSize: 9,
-      cellPadding: 3 // Adicionado padding para melhor espaçamento
+      cellPadding: 3
     },
     alternateRowStyles: {
       fillColor: [240, 245, 250]

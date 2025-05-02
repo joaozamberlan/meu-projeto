@@ -7,7 +7,6 @@ import Swal from 'sweetalert2';
 import exercisesDB from "./api/exercisesDB";
 import { gerarPDF, calcularTotalSeries } from "./api/_documentPDF";
 
-// Modifique os estilos de cores para melhor contraste
 const buttonStyles = {
   primary: `bg-blue-600 hover:bg-blue-700`,
   danger: `bg-red-600 hover:bg-red-700`, 
@@ -122,7 +121,7 @@ export default function TreinoApp() {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8, // Distância mínima para iniciar o drag
+        distance: 8,
       },
     }),
     useSensor(KeyboardSensor)
@@ -133,10 +132,9 @@ export default function TreinoApp() {
     setNotificationType(tipo);
     setShowNotification(true);
 
-    // Reduzir o tempo para 1.5 segundos (1500ms)
     setTimeout(() => {
       setShowNotification(false);
-    }, 1500); // Alterado de 3000 para 1500
+    }, 1500);
   };
 
   const fecharNotificacao = () => {
@@ -172,7 +170,7 @@ export default function TreinoApp() {
         metodo,
         observacao
       });
-      salvarTreinos(novosTreinos); // Use salvarTreinos em vez de setTreinos
+      salvarTreinos(novosTreinos);
       resetarCamposExercicio();
       mostrarNotificacao(`Exercício "${nomeExercicio}" adicionado com sucesso!`);
     } catch (error) {
@@ -337,7 +335,17 @@ export default function TreinoApp() {
   };
 
   const handleGerarPDF = () => {
-    const resultado = gerarPDF(treinos, nomeProfissional);
+    // Define o nome do arquivo baseado no aluno selecionado
+    const nomeArquivo = alunoSelecionado 
+      ? `Plano de Treino_${alunoSelecionado.nome}`
+      : 'Plano de Treino';
+    
+    const resultado = gerarPDF(
+      treinos,
+      nomeProfissional, 
+      nomeArquivo      // Este nome será usado no download do arquivo
+    );
+
     if (resultado) {
       mostrarNotificacao("PDF de treinos gerado com sucesso!");
     }
@@ -439,6 +447,13 @@ export default function TreinoApp() {
       } catch (error) {
         console.error('Erro ao carregar treinos salvos:', error);
       }
+    }
+  }, []);
+
+  useEffect(() => {
+    const nomeSalvo = localStorage.getItem('nomeProfissional');
+    if (nomeSalvo) {
+      setNomeProfissional(nomeSalvo);
     }
   }, []);
 
@@ -751,7 +766,10 @@ export default function TreinoApp() {
                 <input
                   type="text"
                   value={nomeProfissional}
-                  onChange={(e) => setNomeProfissional(e.target.value)}
+                  onChange={(e) => {
+                    setNomeProfissional(e.target.value);
+                    localStorage.setItem('nomeProfissional', e.target.value);
+                  }}
                   className={`w-full border rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition
                     ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'}`}
                   placeholder="Seu nome como profissional"
@@ -776,7 +794,7 @@ export default function TreinoApp() {
                       </th>
                     </tr>
                   </thead>
-                  <tbody className={`${darkMode ? 'bg-gray-800' : 'bg-white'} divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                  <tbody className={`${darkMode ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'}`}>
                     {Object.entries(getTotalSeries).map(([grupo, total]) => (
                       <tr key={grupo} className={darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}>
                         <td className={`px-4 py-3 text-sm font-medium ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>
